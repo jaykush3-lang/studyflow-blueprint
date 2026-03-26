@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ page_title }} | Study Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <script
+      src="{{ url_for('static', filename='js/app.js') }}"
+      defer
+    ></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">Personal Study OS</p>
+          <h1>Study Planner</h1>
+          <p class="sidebar-copy">
+            Plan daily work, measure progress, and stay on track for GATE DA,
+            DSA in Python, and college study.
+          </p>
+        </div>
+
+        <nav class="nav-links">
+          <a href="{{ url_for('dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('goals') }}">Goals</a>
+          <a href="{{ url_for('tasks') }}">Daily Tasks</a>
+          <a href="{{ url_for('progress') }}">Progress</a>
+        </nav>
+
+        <div class="sidebar-note">
+          <p>Starter tip</p>
+          <span>Use the forms to add your own study targets and daily actions.</span>
+        </div>
+      </aside>
+
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

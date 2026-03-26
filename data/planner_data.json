@@ -1,0 +1,67 @@
+{
+  "categories": [
+    "GATE DA",
+    "DSA in Python",
+    "College Study"
+  ],
+  "goals": [
+    {
+      "id": 1,
+      "title": "Revise Probability for GATE DA",
+      "category": "GATE DA",
+      "description": "Cover concepts, formulas, and previous year questions.",
+      "start_date": "2026-03-26",
+      "target_date": "2026-04-05",
+      "status": "In Progress",
+      "progress": 0
+    },
+    {
+      "id": 2,
+      "title": "Solve 50 Python DSA Questions in 21 Days",
+      "category": "DSA in Python",
+      "description": "Focus on arrays, strings, recursion, and sorting with a 21-day challenge.",
+      "start_date": "2026-03-26",
+      "target_date": "2026-04-16",
+      "status": "In Progress",
+      "progress": 0
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "goal_id": 1,
+      "title": "Revise Bayes theorem and conditional probability",
+      "category": "GATE DA",
+      "due_date": "2026-03-26",
+      "priority": "High",
+      "status": "Pending",
+      "estimated_time": "90 min"
+    },
+    {
+      "id": 2,
+      "goal_id": 2,
+      "title": "Solve 3 array problems in Python",
+      "category": "DSA in Python",
+      "due_date": "2026-03-26",
+      "priority": "Medium",
+      "status": "Pending",
+      "estimated_time": "60 min"
+    },
+    {
+      "id": 3,
+      "goal_id": null,
+      "title": "Review college lecture notes",
+      "category": "College Study",
+      "due_date": "2026-03-26",
+      "priority": "Low",
+      "status": "Pending",
+      "estimated_time": "45 min"
+    }
+  ],
+  "track_progress": {
+    "dsa": [],
+    "gate-da": [],
+    "college-work": []
+  },
+  "custom_tracks": []
+}

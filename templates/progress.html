@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Progress View</p>
+      <h2>Measure consistency, not just ambition.</h2>
+      <p class="hero-copy">
+        A good system makes your preparation visible and honest.
+      </p>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span>Completed Tasks</span>
+      <strong>{{ completed_tasks }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Total Tasks</span>
+      <strong>{{ total_tasks }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Overall Completion Rate</span>
+      <strong>{{ completion_rate }}%</strong>
+    </article>
+  </section>
+
+  <section class="panel-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <h3>Goals Progress</h3>
+      </div>
+      <div class="item-list">
+        {% for goal in goals %}
+          <div class="progress-row">
+            <div class="progress-labels">
+              <strong>{{ goal.title }}</strong>
+              <span>{{ goal.progress }}% • {{ goal.days_left }} days left</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" style="width: {{ goal.progress }}%;"></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <h3>Category Summary</h3>
+      </div>
+      <div class="item-list">
+        {% for category in category_summary %}
+          <div class="item-card">
+            <div>
+              <h4>{{ category.name }}</h4>
+              <p>{{ category.task_count }} tasks planned</p>
+            </div>
+            <span class="progress-pill">{{ category.completion_rate }}%</span>
+          </div>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+{% endblock %}

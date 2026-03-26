@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel layout-two">
+    <div>
+      <p class="eyebrow">Daily Task Planner</p>
+      <h2>Plan what you will actually do today.</h2>
+      <p class="hero-copy">
+        Tie every task to a bigger goal whenever possible to keep your work intentional.
+      </p>
+    </div>
+
+    <form class="planner-form" method="post">
+      <input name="title" type="text" placeholder="Task title" required />
+      <select name="category" required>
+        {% for category in categories %}
+          <option value="{{ category }}">{{ category }}</option>
+        {% endfor %}
+      </select>
+      <select name="goal_id">
+        <option value="">Independent Task</option>
+        {% for goal in goals %}
+          <option value="{{ goal.id }}">{{ goal.title }}</option>
+        {% endfor %}
+      </select>
+      <input name="due_date" type="date" value="{{ today }}" required />
+      <select name="priority" required>
+        <option>High</option>
+        <option selected>Medium</option>
+        <option>Low</option>
+      </select>
+      <select name="status" required>
+        <option>Pending</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
+      <input name="estimated_time" type="text" placeholder="Estimated time e.g. 45 min" />
+      <button class="button" type="submit">Add Task</button>
+    </form>
+  </section>
+
+  <section class="table-panel">
+    <div class="panel-heading">
+      <h3>Task List</h3>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Category</th>
+            <th>Goal</th>
+            <th>Due Date</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task in tasks %}
+            <tr>
+              <td>{{ task.title }}</td>
+              <td>{{ task.category }}</td>
+              <td>{{ task.goal_title }}</td>
+              <td>{{ task.due_date }}</td>
+              <td>{{ task.priority }}</td>
+              <td>{{ task.status }}</td>
+              <td>{{ task.estimated_time }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

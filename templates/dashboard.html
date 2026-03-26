@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Daily Focus</p>
+      <h2>Build momentum from today’s work.</h2>
+      <p class="hero-copy">
+        Your planner keeps long-term goals tied to daily execution, so your
+        preparation stays realistic and measurable.
+      </p>
+      {% if next_goal %}
+        <div class="countdown-banner">
+          <span class="countdown-days">{{ next_goal.days_left }}</span>
+          <div>
+            <strong>{{ next_goal.title }}</strong>
+            <p>{{ next_goal.category }} target in {{ next_goal.days_left }} day(s)</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    <a class="button button-secondary" href="{{ url_for('seed') }}">Reset Demo Data</a>
+  </section>
+
+  {% set dsa_goal = goals | selectattr('category', 'equalto', 'DSA in Python') | list | first %}
+  {% if dsa_goal %}
+    <section class="spotlight-panel">
+      <div class="spotlight-copy">
+        <p class="eyebrow">DSA Focus</p>
+        <h3>{{ dsa_goal.title }}</h3>
+        <p>{{ dsa_goal.description }}</p>
+      </div>
+      <div class="spotlight-metrics">
+        <div class="spotlight-pill">
+          <span>Total Days</span>
+          <strong>{{ dsa_goal.duration_days }}</strong>
+        </div>
+        <div class="spotlight-pill">
+          <span>Days Left</span>
+          <strong>{{ dsa_goal.days_left }}</strong>
+        </div>
+        <div class="spotlight-pill">
+          <span>Progress</span>
+          <strong>{{ dsa_goal.progress }}%</strong>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="live-grid">
+    <article class="clock-panel">
+      <p class="eyebrow">Live Clock</p>
+      <h3 data-live-time>00:00:00</h3>
+      <p class="clock-date" data-live-date>Loading date...</p>
+    </article>
+    <article class="calendar-panel">
+      <div class="panel-heading">
+        <h3 data-calendar-title>Calendar</h3>
+        <span data-calendar-subtitle>Month dates</span>
+      </div>
+      <div class="calendar-grid" data-calendar-grid></div>
+    </article>
+  </section>
+
+  <section class="panel layout-two">
+    <div>
+      <p class="eyebrow">Add New Track</p>
+      <h2>Create your own study plan from the website.</h2>
+      <p class="hero-copy">
+        Add more areas like aptitude, projects, revision, placements, or anything else you want to track.
+      </p>
+    </div>
+
+    <form class="planner-form" method="post" action="{{ url_for('add_track') }}">
+      <input name="title" type="text" placeholder="Track name" required />
+      <input name="duration_days" type="number" min="1" value="30" required />
+      <textarea name="overview" placeholder="Short overview" rows="3"></textarea>
+      <textarea name="details" placeholder="Add detail lines, one per line" rows="4"></textarea>
+      <button class="button" type="submit">Add Track</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>Separate Daily Tracks</h3>
+      <span>Click to open from Day 1</span>
+    </div>
+    <div class="track-grid">
+      {% for track in tracks %}
+        <a class="track-card track-card-{{ track.theme }}" href="{{ url_for('track_detail', track_slug=track.slug) }}">
+          <div class="track-card-top">
+            <span>{{ track.title }}</span>
+            <strong>{{ track.duration_days }} days</strong>
+          </div>
+          <p>{{ track.overview }}</p>
+          <div class="track-progress-meta">
+            <span>{{ track.completed_count }} completed</span>
+            <span>{{ track.remaining_count }} left</span>
+            <span>{{ track.progress_percent }}%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" style="width: {{ track.progress_percent }}%;"></div>
+          </div>
+          <div class="track-detail-list">
+            {% for detail in track.details %}
+              <span>{{ detail }}</span>
+            {% endfor %}
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span>Goals</span>
+      <strong>{{ stats.goal_count }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Tasks</span>
+      <strong>{{ stats.task_count }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Completed Today</span>
+      <strong>{{ stats.completed_today }}</strong>
+    </article>
+    <article class="stat-card">
+      <span>Average Goal Progress</span>
+      <strong>{{ stats.total_progress }}%</strong>
+    </article>
+    <article class="stat-card glow-card">
+      <span>Today's Minutes</span>
+      <strong>{{ stats.today_minutes }}</strong>
+    </article>
+    <article class="stat-card glow-card">
+      <span>Pending Minutes</span>
+      <strong>{{ stats.pending_minutes }}</strong>
+    </article>
+    <article class="stat-card glow-card">
+      <span>Completed Minutes</span>
+      <strong>{{ stats.completed_minutes }}</strong>
+    </article>
+  </section>
+
+  <section class="quote-panel">
+    <div>
+      <p class="eyebrow">Motivation</p>
+      <h3 data-quote-text>"{{ quote.quote }}"</h3>
+      <p class="quote-author" data-quote-author>{{ quote.author }}</p>
+    </div>
+    <div class="quote-dots">
+      {% for item in quotes %}
+        <button
+          type="button"
+          class="quote-dot"
+          data-quote-item
+          data-quote="{{ item.quote }}"
+          data-author="{{ item.author }}"
+          data-active="{{ 'true' if loop.index0 == quote_index else 'false' }}"
+          aria-label="Show quote by {{ item.author }}"
+        ></button>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <h3>Today’s Tasks</h3>
+        <a href="{{ url_for('tasks') }}">Manage tasks</a>
+      </div>
+      {% if today_tasks %}
+        <div class="item-list">
+          {% for task in today_tasks %}
+            <div class="item-card">
+              <div>
+                <h4>{{ task.title }}</h4>
+                <p>{{ task.category }} • {{ task.priority }} priority</p>
+              </div>
+              <span class="status-chip">{{ task.status }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No tasks planned for {{ today }} yet.</p>
+      {% endif %}
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <h3>Active Goals</h3>
+        <a href="{{ url_for('goals') }}">View goals</a>
+      </div>
+      {% if active_goals %}
+        <div class="item-list">
+          {% for goal in active_goals %}
+            <div class="item-card">
+              <div>
+                <h4>{{ goal.title }}</h4>
+                <p>{{ goal.category }}</p>
+              </div>
+              <span class="progress-pill">{{ goal.progress }}%</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">Add a goal to start planning your preparation.</p>
+      {% endif %}
+    </article>
+  </section>
+
+  <section class="panel-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <h3>Pending Work</h3>
+      </div>
+      {% if pending_tasks %}
+        <div class="item-list">
+          {% for task in pending_tasks %}
+            <div class="item-card">
+              <div>
+                <h4>{{ task.title }}</h4>
+                <p>{{ task.due_date }} • {{ task.estimated_time }}</p>
+              </div>
+              <span class="status-chip">{{ task.status }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">Everything is completed right now.</p>
+      {% endif %}
+    </article>
+
+    <article class="panel accent-panel">
+      <div class="panel-heading">
+        <h3>Overdue Tasks</h3>
+      </div>
+      {% if overdue_tasks %}
+        <div class="item-list">
+          {% for task in overdue_tasks %}
+            <div class="item-card">
+              <div>
+                <h4>{{ task.title }}</h4>
+                <p>{{ task.category }} • Due {{ task.due_date }}</p>
+              </div>
+              <span class="status-chip">{{ task.priority }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No overdue items. Your schedule is under control.</p>
+      {% endif %}
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>Goal Countdown</h3>
+    </div>
+    <div class="goal-timeline">
+        {% for goal in goals %}
+        <article class="timeline-card {% if goal.category == 'DSA in Python' %}timeline-card-dsa{% endif %}">
+          <div class="timeline-days">{{ goal.days_left }}</div>
+          <div>
+            <h4>{{ goal.title }}</h4>
+            <p>{{ goal.category }} • {{ goal.duration_days }} day plan • Target {{ goal.target_date }}</p>
+          </div>
+          <span class="progress-pill">{{ goal.progress }}%</span>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="hero track-hero track-{{ track.theme }}">
+    <div>
+      <p class="eyebrow">Separate Plan</p>
+      <h2>{{ track.title }}</h2>
+      <p class="hero-copy">{{ track.overview }}</p>
+    </div>
+    <div class="track-summary">
+      <div class="spotlight-pill">
+        <span>Start</span>
+        <strong>Day 1</strong>
+      </div>
+      <div class="spotlight-pill">
+        <span>Total Days</span>
+        <strong>{{ track.duration_days }}</strong>
+      </div>
+      <div class="spotlight-pill">
+        <span>Completed</span>
+        <strong>{{ completed_count }}</strong>
+      </div>
+      <div class="spotlight-pill">
+        <span>Progress</span>
+        <strong>{{ progress_percent }}%</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>{{ track.title }} Progress</h3>
+      <span>Starts from zero until you tick a day complete</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-bar" style="width: {{ progress_percent }}%;"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>{{ track.title }} Daily Roadmap</h3>
+      <a href="{{ url_for('dashboard') }}">Back to dashboard</a>
+    </div>
+    <div class="day-plan-grid">
+      {% for item in plan %}
+        <article class="day-card day-card-{{ track.theme }}">
+          <div class="day-card-top">
+            <div class="day-badge">Day {{ item.day }}</div>
+            <form method="post" action="{{ url_for('toggle_track_day', track_slug=track_slug) }}">
+              <input type="hidden" name="day" value="{{ item.day }}" />
+              <button
+                class="tick-button-circle {% if item.completed %}tick-button-circle-done{% endif %}"
+                type="submit"
+                aria-label="{% if item.completed %}Mark day {{ item.day }} incomplete{% else %}Mark day {{ item.day }} complete{% endif %}"
+              >
+                <span class="tick-ring"></span>
+                <span class="tick-check">✓</span>
+              </button>
+            </form>
+          </div>
+          <h4>{{ item.focus }}</h4>
+          <p>{{ item.detail }}</p>
+          <div class="day-footer">
+            <span>{{ item.minutes }} min target</span>
+            <span>{% if item.completed %}Completed{% else %}Fresh start plan{% endif %}</span>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

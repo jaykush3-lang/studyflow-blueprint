@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel layout-two">
+    <div>
+      <p class="eyebrow">Goal Planning</p>
+      <h2>Track your important targets by date and progress.</h2>
+      <p class="hero-copy">
+        Use goals for exam topics, DSA milestones, and college deadlines.
+      </p>
+    </div>
+
+    <form class="planner-form" method="post">
+      <input name="title" type="text" placeholder="Goal title" required />
+      <select name="category" required>
+        {% for category in categories %}
+          <option value="{{ category }}">{{ category }}</option>
+        {% endfor %}
+      </select>
+      <textarea name="description" placeholder="Short description" rows="3"></textarea>
+      <input name="start_date" type="date" value="{{ today }}" required />
+      <input name="target_date" type="date" value="{{ today }}" required />
+      <select name="status" required>
+        <option>In Progress</option>
+        <option>Planned</option>
+        <option>Completed</option>
+      </select>
+      <input name="progress" type="number" min="0" max="100" value="0" required />
+      <button class="button" type="submit">Add Goal</button>
+    </form>
+  </section>
+
+  <section class="card-grid">
+    {% for goal in goals %}
+      <article class="goal-card {% if goal.category == 'DSA in Python' %}goal-card-dsa{% endif %}">
+        <div class="goal-topline">
+          <span>{{ goal.category }}</span>
+          <span>{{ goal.status }}</span>
+        </div>
+        <h3>{{ goal.title }}</h3>
+        <p>{{ goal.description }}</p>
+        <div class="goal-meta">
+          <span>Plan: {{ goal.duration_days }} days</span>
+          <span>Start: {{ goal.start_date }}</span>
+          <span>Target: {{ goal.target_date }}</span>
+          <span>Days left: {{ goal.days_left }}</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" style="width: {{ goal.progress }}%;"></div>
+        </div>
+        <strong>{{ goal.progress }}% complete</strong>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}
