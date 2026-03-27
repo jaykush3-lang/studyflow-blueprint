@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const cursorOrb = document.querySelector(".cursor-orb");
   const cursorRing = document.querySelector(".cursor-ring");
+  const ambientGlows = Array.from(document.querySelectorAll(".ambient-glow"));
   const quoteText = document.querySelector("[data-quote-text]");
   const quoteAuthor = document.querySelector("[data-quote-author]");
   const quoteItems = Array.from(document.querySelectorAll("[data-quote-item]"));
@@ -9,6 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const calendarTitle = document.querySelector("[data-calendar-title]");
   const calendarSubtitle = document.querySelector("[data-calendar-subtitle]");
   const calendarGrid = document.querySelector("[data-calendar-grid]");
+  const revealTargets = Array.from(
+    document.querySelectorAll(".hero, .panel, .table-panel, .stat-card, .goal-card, .track-card, .day-card, .clock-panel, .calendar-panel, .quote-panel, .spotlight-panel, .timeline-card"),
+  );
 
   if (
     cursorOrb &&
@@ -66,6 +70,39 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.requestAnimationFrame(animateCursor);
+  }
+
+  if (revealTargets.length > 0 && "IntersectionObserver" in window) {
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 },
+    );
+
+    revealTargets.forEach((target, index) => {
+      target.classList.add("scroll-reveal");
+      target.style.setProperty("--reveal-delay", `${Math.min(index * 40, 260)}ms`);
+      revealObserver.observe(target);
+    });
+  }
+
+  if (ambientGlows.length > 0) {
+    const handleScrollMotion = () => {
+      const scrollY = window.scrollY;
+      ambientGlows.forEach((glow, index) => {
+        const offset = (index + 1) * 0.08;
+        glow.style.transform = `translate3d(0, ${scrollY * offset}px, 0) scale(${1 + scrollY * 0.00008})`;
+      });
+    };
+
+    handleScrollMotion();
+    window.addEventListener("scroll", handleScrollMotion, { passive: true });
   }
 
   if (quoteText && quoteAuthor && quoteItems.length > 0) {

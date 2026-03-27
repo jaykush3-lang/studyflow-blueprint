@@ -31,6 +31,63 @@ body {
   min-height: 100vh;
 }
 
+.ambient-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-glow,
+.ambient-grid,
+.ambient-noise {
+  position: absolute;
+  inset: 0;
+}
+
+.ambient-glow {
+  filter: blur(22px);
+  opacity: 0.65;
+  transition: transform 220ms linear;
+}
+
+.ambient-glow-one {
+  inset: -10% auto auto -8%;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 182, 255, 0.28), rgba(56, 182, 255, 0));
+  animation: slowFloat 12s ease-in-out infinite;
+}
+
+.ambient-glow-two {
+  inset: auto -8% -14% auto;
+  width: 620px;
+  height: 620px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(61, 214, 198, 0.18), rgba(61, 214, 198, 0));
+  animation: slowFloatReverse 16s ease-in-out infinite;
+}
+
+.ambient-grid {
+  background-image:
+    linear-gradient(rgba(143, 217, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 217, 255, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+  opacity: 0.35;
+}
+
+.ambient-noise {
+  opacity: 0.06;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.4) 0.6px, transparent 0.7px),
+    radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.35) 0.6px, transparent 0.7px),
+    radial-gradient(circle at 40% 70%, rgba(255, 255, 255, 0.3) 0.7px, transparent 0.8px);
+  background-size: 180px 180px;
+}
+
 .cursor-orb,
 .cursor-ring {
   position: fixed;
@@ -161,6 +218,7 @@ a {
 
 .content {
   padding: 32px;
+  perspective: 1000px;
 }
 
 .hero,
@@ -175,6 +233,23 @@ a {
   animation: riseIn 700ms ease both;
   position: relative;
   overflow: hidden;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(34px) scale(0.985);
+  filter: blur(10px);
+  transition:
+    opacity 700ms ease,
+    transform 700ms ease,
+    filter 700ms ease;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
 }
 
 .hero {
@@ -1030,5 +1105,25 @@ th {
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes slowFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(30px, -24px, 0) scale(1.05);
+  }
+}
+
+@keyframes slowFloatReverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-24px, 28px, 0) scale(1.07);
   }
 }
