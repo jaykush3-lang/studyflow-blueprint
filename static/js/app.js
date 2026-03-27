@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const cursorOrb = document.querySelector(".cursor-orb");
+  const cursorRing = document.querySelector(".cursor-ring");
   const quoteText = document.querySelector("[data-quote-text]");
   const quoteAuthor = document.querySelector("[data-quote-author]");
   const quoteItems = Array.from(document.querySelectorAll("[data-quote-item]"));
@@ -7,6 +9,64 @@ document.addEventListener("DOMContentLoaded", () => {
   const calendarTitle = document.querySelector("[data-calendar-title]");
   const calendarSubtitle = document.querySelector("[data-calendar-subtitle]");
   const calendarGrid = document.querySelector("[data-calendar-grid]");
+
+  if (
+    cursorOrb &&
+    cursorRing &&
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches
+  ) {
+    let pointerX = window.innerWidth / 2;
+    let pointerY = window.innerHeight / 2;
+    let orbX = pointerX;
+    let orbY = pointerY;
+    let ringX = pointerX;
+    let ringY = pointerY;
+
+    const setHoverState = (active, magneticTarget) => {
+      cursorOrb.classList.toggle("cursor-hover", active);
+      cursorRing.classList.toggle("cursor-hover", active);
+      cursorRing.classList.toggle("cursor-magnetic", Boolean(magneticTarget));
+    };
+
+    const updatePointer = (x, y) => {
+      pointerX = x;
+      pointerY = y;
+      cursorOrb.classList.add("cursor-visible");
+      cursorRing.classList.add("cursor-visible");
+    };
+
+    document.addEventListener("mousemove", (event) => {
+      updatePointer(event.clientX, event.clientY);
+    });
+
+    document.addEventListener("mouseleave", () => {
+      cursorOrb.classList.remove("cursor-visible");
+      cursorRing.classList.remove("cursor-visible");
+    });
+
+    document.querySelectorAll("a, button, input, textarea, select, .track-card, .goal-card, .item-card, .panel, .hero").forEach((element) => {
+      element.addEventListener("mouseenter", () => {
+        setHoverState(true, true);
+      });
+      element.addEventListener("mouseleave", () => {
+        setHoverState(false, false);
+      });
+    });
+
+    const animateCursor = () => {
+      orbX += (pointerX - orbX) * 0.22;
+      orbY += (pointerY - orbY) * 0.22;
+      ringX += (pointerX - ringX) * 0.12;
+      ringY += (pointerY - ringY) * 0.12;
+
+      cursorOrb.style.transform = `translate(${orbX}px, ${orbY}px) translate(-50%, -50%)`;
+      cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+
+      window.requestAnimationFrame(animateCursor);
+    };
+
+    window.requestAnimationFrame(animateCursor);
+  }
 
   if (quoteText && quoteAuthor && quoteItems.length > 0) {
     let currentIndex = quoteItems.findIndex((item) => item.dataset.active === "true");
