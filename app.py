@@ -7,14 +7,14 @@ from pathlib import Path
 from typing import Any
 
 from flask import Flask, redirect, render_template, request, url_for
-from sqlalchemy import Integer, Text, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from pymongo import MongoClient
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DATA_FILE = DATA_DIR / "planner_data.json"
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{(DATA_DIR / 'planner.db').as_posix()}")
+MONGODB_URI = os.getenv("MONGODB_URI", "")
+MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "study_planner")
 
 DEFAULT_CATEGORIES = ["GATE DA", "DSA in Python", "College Study"]
 TRACKS = {
@@ -52,6 +52,11 @@ TRACKS = {
         ],
     },
 }
+TRACK_TO_CATEGORY = {
+    "dsa": "DSA in Python",
+    "gate-da": "GATE DA",
+    "college-work": "College Study",
+}
 MOTIVATION_QUOTES = [
     {
         "quote": "The successful warrior is the average man, with laser-like focus.",
@@ -80,32 +85,14 @@ MOTIVATION_QUOTES = [
 ]
 
 
-def normalize_database_url(url: str) -> str:
-    if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql://", 1)
-    return url
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-class PlannerState(Base):
-    __tablename__ = "planner_state"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    payload: Mapped[str] = mapped_column(Text, nullable=False)
-
-
-engine = create_engine(normalize_database_url(DATABASE_URL), future=True)
-SessionLocal = sessionmaker(bind=engine, future=True)
+mongo_client: MongoClient | None = None
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
 
     DATA_DIR.mkdir(exist_ok=True)
-    ensure_database()
+    ensure_storage()
 
     @app.route("/")
     def dashboard() -> str:
@@ -196,6 +183,41 @@ def create_app() -> Flask:
             today=date.today().isoformat(),
         )
 
+    @app.route("/goals/<int:goal_id>/edit", methods=["GET", "POST"])
+    def edit_goal(goal_id: int) -> str:
+        data = load_data()
+        goal = next((goal for goal in data["goals"] if goal["id"] == goal_id), None)
+        if goal is None:
+            return redirect(url_for("goals"))
+
+        if request.method == "POST":
+            goal["title"] = request.form["title"].strip()
+            goal["category"] = request.form["category"]
+            goal["description"] = request.form["description"].strip()
+            goal["start_date"] = request.form["start_date"]
+            goal["target_date"] = request.form["target_date"]
+            goal["status"] = request.form["status"]
+            goal["progress"] = clamp_progress(request.form["progress"])
+            save_data(data)
+            return redirect(url_for("goals"))
+
+        return render_template(
+            "edit_goal.html",
+            page_title="Edit Goal",
+            goal=goal,
+            categories=data["categories"],
+        )
+
+    @app.post("/goals/<int:goal_id>/delete")
+    def delete_goal(goal_id: int):
+        data = load_data()
+        data["goals"] = [goal for goal in data["goals"] if goal["id"] != goal_id]
+        for task in data["tasks"]:
+            if task["goal_id"] == goal_id:
+                task["goal_id"] = None
+        save_data(data)
+        return redirect(url_for("goals"))
+
     @app.route("/tasks", methods=["GET", "POST"])
     def tasks() -> str:
         data = load_data()
@@ -223,6 +245,39 @@ def create_app() -> Flask:
             categories=data["categories"],
             today=date.today().isoformat(),
         )
+
+    @app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"])
+    def edit_task(task_id: int) -> str:
+        data = load_data()
+        task = next((task for task in data["tasks"] if task["id"] == task_id), None)
+        if task is None:
+            return redirect(url_for("tasks"))
+
+        if request.method == "POST":
+            task["goal_id"] = int(request.form["goal_id"]) if request.form["goal_id"] else None
+            task["title"] = request.form["title"].strip()
+            task["category"] = request.form["category"]
+            task["due_date"] = request.form["due_date"]
+            task["priority"] = request.form["priority"]
+            task["status"] = request.form["status"]
+            task["estimated_time"] = request.form["estimated_time"].strip()
+            save_data(data)
+            return redirect(url_for("tasks"))
+
+        return render_template(
+            "edit_task.html",
+            page_title="Edit Task",
+            task=task,
+            goals=data["goals"],
+            categories=data["categories"],
+        )
+
+    @app.post("/tasks/<int:task_id>/delete")
+    def delete_task(task_id: int):
+        data = load_data()
+        data["tasks"] = [task for task in data["tasks"] if task["id"] != task_id]
+        save_data(data)
+        return redirect(url_for("tasks"))
 
     @app.route("/progress")
     def progress() -> str:
@@ -264,7 +319,8 @@ def create_app() -> Flask:
             return redirect(url_for("dashboard"))
 
         completed_days = set(data.get("track_progress", {}).get(track_slug, []))
-        plan = generate_day_plan(track_slug, track, completed_days)
+        day_notes = data.get("track_day_notes", {}).get(track_slug, {})
+        plan = generate_day_plan(track_slug, track, completed_days, day_notes)
         completed_count = len(completed_days)
         return render_template(
             "track_detail.html",
@@ -274,6 +330,7 @@ def create_app() -> Flask:
             plan=plan,
             completed_count=completed_count,
             progress_percent=round((completed_count / track["duration_days"]) * 100, 1),
+            is_custom_track=track_slug not in TRACKS,
         )
 
     @app.post("/tracks/add")
@@ -332,8 +389,40 @@ def create_app() -> Flask:
             completed.add(day)
 
         progress[track_slug] = sorted(completed)
+        sync_goal_progress(data, track_slug)
         save_data(data)
         return redirect(url_for("track_detail", track_slug=track_slug))
+
+    @app.post("/track/<track_slug>/save-note")
+    def save_track_note(track_slug: str):
+        data = load_data()
+        track = get_all_tracks(data).get(track_slug)
+        if not track:
+            return redirect(url_for("dashboard"))
+
+        day = int(request.form["day"])
+        if day < 1 or day > track["duration_days"]:
+            return redirect(url_for("track_detail", track_slug=track_slug))
+
+        notes = data.setdefault("track_day_notes", {})
+        track_notes = notes.setdefault(track_slug, {})
+        track_notes[str(day)] = request.form["note"].strip()
+        save_data(data)
+        return redirect(url_for("track_detail", track_slug=track_slug))
+
+    @app.post("/track/<track_slug>/delete")
+    def delete_track(track_slug: str):
+        if track_slug in TRACKS:
+            return redirect(url_for("track_detail", track_slug=track_slug))
+
+        data = load_data()
+        data["custom_tracks"] = [
+            track for track in data.get("custom_tracks", []) if track["slug"] != track_slug
+        ]
+        data.get("track_progress", {}).pop(track_slug, None)
+        data.get("track_day_notes", {}).pop(track_slug, None)
+        save_data(data)
+        return redirect(url_for("dashboard"))
 
     @app.route("/seed")
     def seed() -> str:
@@ -343,13 +432,7 @@ def create_app() -> Flask:
     return app
 
 
-def ensure_data_file() -> None:
-    raise NotImplementedError
-
-
-def ensure_database() -> None:
-    Base.metadata.create_all(engine)
-
+def ensure_storage() -> None:
     data = load_data()
     changed = False
 
@@ -359,6 +442,10 @@ def ensure_database() -> None:
 
     if "custom_tracks" not in data:
         data["custom_tracks"] = []
+        changed = True
+
+    if "track_day_notes" not in data:
+        data["track_day_notes"] = {}
         changed = True
 
     for slug in get_all_tracks(data):
@@ -376,25 +463,33 @@ def ensure_database() -> None:
 
 
 def load_data() -> dict[str, Any]:
-    with SessionLocal() as session:
-        state = session.get(PlannerState, 1)
-        if state is None:
-            initial_data = load_initial_data()
-            session.add(PlannerState(id=1, payload=json.dumps(initial_data)))
-            session.commit()
-            return initial_data
-        return json.loads(state.payload)
+    collection = get_planner_collection()
+    if collection is None:
+        return load_local_data()
+
+    state = collection.find_one({"_id": "planner_state"})
+    if state is None:
+        initial_data = load_initial_data()
+        collection.replace_one(
+            {"_id": "planner_state"},
+            {"_id": "planner_state", "payload": initial_data},
+            upsert=True,
+        )
+        return initial_data
+    return state["payload"]
 
 
 def save_data(data: dict[str, Any]) -> None:
-    with SessionLocal() as session:
-        state = session.get(PlannerState, 1)
-        payload = json.dumps(data, indent=2)
-        if state is None:
-            session.add(PlannerState(id=1, payload=payload))
-        else:
-            state.payload = payload
-        session.commit()
+    collection = get_planner_collection()
+    if collection is None:
+        save_local_data(data)
+        return
+
+    collection.replace_one(
+        {"_id": "planner_state"},
+        {"_id": "planner_state", "payload": data},
+        upsert=True,
+    )
 
 
 def load_initial_data() -> dict[str, Any]:
@@ -402,6 +497,37 @@ def load_initial_data() -> dict[str, Any]:
         with DATA_FILE.open("r", encoding="utf-8") as file:
             return json.load(file)
     return seed_data()
+
+
+def load_local_data() -> dict[str, Any]:
+    if DATA_FILE.exists():
+        with DATA_FILE.open("r", encoding="utf-8") as file:
+            return json.load(file)
+
+    data = seed_data()
+    save_local_data(data)
+    return data
+
+
+def save_local_data(data: dict[str, Any]) -> None:
+    with DATA_FILE.open("w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2)
+
+
+def get_mongo_client() -> MongoClient | None:
+    global mongo_client
+    if not MONGODB_URI:
+        return None
+    if mongo_client is None:
+        mongo_client = MongoClient(MONGODB_URI)
+    return mongo_client
+
+
+def get_planner_collection():
+    client = get_mongo_client()
+    if client is None:
+        return None
+    return client[MONGODB_DB_NAME]["planner_state"]
 
 
 def next_id(records: list[dict[str, Any]]) -> int:
@@ -487,6 +613,7 @@ def seed_data() -> dict[str, Any]:
             },
         ],
         "track_progress": {slug: [] for slug in TRACKS},
+        "track_day_notes": {},
         "custom_tracks": [],
     }
 
@@ -526,7 +653,12 @@ def get_track_cards(data: dict[str, Any]) -> list[dict[str, Any]]:
     return cards
 
 
-def generate_day_plan(track_slug: str, track: dict[str, Any], completed_days: set[int]) -> list[dict[str, Any]]:
+def generate_day_plan(
+    track_slug: str,
+    track: dict[str, Any],
+    completed_days: set[int],
+    day_notes: dict[str, str],
+) -> list[dict[str, Any]]:
     if track_slug == "dsa":
         blocks = [
             ("Arrays and Strings", "Solve 3 questions and revise patterns"),
@@ -572,6 +704,7 @@ def generate_day_plan(track_slug: str, track: dict[str, Any], completed_days: se
                 "detail": block[1],
                 "minutes": 90 if track_slug == "dsa" else 120 if track_slug == "gate-da" else 60,
                 "completed": day in completed_days,
+                "note": day_notes.get(str(day), ""),
             }
         )
     return plan
@@ -595,6 +728,19 @@ def slugify(value: str) -> str:
     cleaned = "".join(char.lower() if char.isalnum() else "-" for char in value)
     parts = [part for part in cleaned.split("-") if part]
     return "-".join(parts) or "custom-track"
+
+
+def sync_goal_progress(data: dict[str, Any], track_slug: str) -> None:
+    category = TRACK_TO_CATEGORY.get(track_slug)
+    track = get_all_tracks(data).get(track_slug)
+    if not category or not track:
+        return
+
+    completed_count = len(data.get("track_progress", {}).get(track_slug, []))
+    progress = round((completed_count / track["duration_days"]) * 100) if track["duration_days"] else 0
+    for goal in data.get("goals", []):
+        if goal.get("category") == category:
+            goal["progress"] = progress
 
 
 def get_days_left(target_date: str) -> int:

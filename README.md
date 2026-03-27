@@ -314,44 +314,44 @@ To open this on any phone and keep your progress synced, deploy the project to a
 This project is now prepared for deployment with:
 
 - `gunicorn` for production serving
-- `DATABASE_URL` support for cloud databases
+- `MONGODB_URI` support for MongoDB Atlas
 - `Procfile` for simple hosting setups
 - `render.yaml` for Render deployment
 
-### Deploy on Render
+### Deploy on Render with MongoDB Atlas
 
-1. Push this project to GitHub
-2. Create a Render account
-3. Create a new Blueprint deployment from your GitHub repo
-4. Render will read `render.yaml`
-5. It will create:
-   - a web app
-   - a hosted database
-6. After deploy, Render gives you a public URL like:
+1. Create a free MongoDB Atlas cluster
+2. Get your connection string
+3. Push this project to GitHub
+4. Create a Render web service from the repo
+5. Set:
+
+```text
+MONGODB_URI=your atlas connection string
+MONGODB_DB_NAME=study_planner
+```
+
+6. Render will give you a public URL like:
 
 ```text
 https://your-project-name.onrender.com
 ```
 
-### Deploy on Railway
+### MongoDB Atlas Free
 
-1. Push this project to GitHub
-2. Create a Railway project from the repo
-3. Add a PostgreSQL database
-4. Set `DATABASE_URL` in Railway variables
-5. Start command:
+MongoDB Atlas offers a free tier for cloud databases.
+
+Typical connection string format:
 
 ```text
-gunicorn app:app
+mongodb+srv://USERNAME:PASSWORD@cluster-name.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 ```
 
-6. Generate a public domain from Railway networking
+Use that value as `MONGODB_URI`.
 
-You will get a public URL like:
+### Old Render Blueprint Note
 
-```text
-https://your-project-name.up.railway.app
-```
+The previous PostgreSQL blueprint setup has been replaced. The app now targets MongoDB instead of SQL storage.
 
 ### Custom Domain
 

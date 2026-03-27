@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel layout-two">
+    <div>
+      <p class="eyebrow">Edit Task</p>
+      <h2>Update today’s work clearly.</h2>
+      <p class="hero-copy">Adjust task timing, status, and goal link whenever your day changes.</p>
+    </div>
+
+    <form class="planner-form" method="post">
+      <input name="title" type="text" value="{{ task.title }}" required />
+      <select name="category" required>
+        {% for category in categories %}
+          <option value="{{ category }}" {% if task.category == category %}selected{% endif %}>{{ category }}</option>
+        {% endfor %}
+      </select>
+      <select name="goal_id">
+        <option value="">Independent Task</option>
+        {% for goal in goals %}
+          <option value="{{ goal.id }}" {% if task.goal_id == goal.id %}selected{% endif %}>{{ goal.title }}</option>
+        {% endfor %}
+      </select>
+      <input name="due_date" type="date" value="{{ task.due_date }}" required />
+      <select name="priority" required>
+        <option {% if task.priority == 'High' %}selected{% endif %}>High</option>
+        <option {% if task.priority == 'Medium' %}selected{% endif %}>Medium</option>
+        <option {% if task.priority == 'Low' %}selected{% endif %}>Low</option>
+      </select>
+      <select name="status" required>
+        <option {% if task.status == 'Pending' %}selected{% endif %}>Pending</option>
+        <option {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+        <option {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+      </select>
+      <input name="estimated_time" type="text" value="{{ task.estimated_time }}" />
+      <button class="button" type="submit">Save Task</button>
+    </form>
+  </section>
+{% endblock %}

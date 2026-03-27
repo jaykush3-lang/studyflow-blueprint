@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel layout-two">
+    <div>
+      <p class="eyebrow">Edit Goal</p>
+      <h2>Update your goal details.</h2>
+      <p class="hero-copy">Refine dates, progress, and direction without losing your existing data.</p>
+    </div>
+
+    <form class="planner-form" method="post">
+      <input name="title" type="text" value="{{ goal.title }}" required />
+      <select name="category" required>
+        {% for category in categories %}
+          <option value="{{ category }}" {% if goal.category == category %}selected{% endif %}>{{ category }}</option>
+        {% endfor %}
+      </select>
+      <textarea name="description" rows="3">{{ goal.description }}</textarea>
+      <input name="start_date" type="date" value="{{ goal.start_date }}" required />
+      <input name="target_date" type="date" value="{{ goal.target_date }}" required />
+      <select name="status" required>
+        <option {% if goal.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+        <option {% if goal.status == 'Planned' %}selected{% endif %}>Planned</option>
+        <option {% if goal.status == 'Completed' %}selected{% endif %}>Completed</option>
+      </select>
+      <input name="progress" type="number" min="0" max="100" value="{{ goal.progress }}" required />
+      <button class="button" type="submit">Save Goal</button>
+    </form>
+  </section>
+{% endblock %}

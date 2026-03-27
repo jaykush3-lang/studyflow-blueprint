@@ -40,7 +40,14 @@
   <section class="panel">
     <div class="panel-heading">
       <h3>{{ track.title }} Daily Roadmap</h3>
-      <a href="{{ url_for('dashboard') }}">Back to dashboard</a>
+      <div class="inline-actions">
+        <a href="{{ url_for('dashboard') }}">Back to dashboard</a>
+        {% if is_custom_track %}
+          <form method="post" action="{{ url_for('delete_track', track_slug=track_slug) }}">
+            <button class="button button-danger" type="submit">Delete Track</button>
+          </form>
+        {% endif %}
+      </div>
     </div>
     <div class="day-plan-grid">
       {% for item in plan %}
@@ -65,6 +72,11 @@
             <span>{{ item.minutes }} min target</span>
             <span>{% if item.completed %}Completed{% else %}Fresh start plan{% endif %}</span>
           </div>
+          <form class="day-note-form" method="post" action="{{ url_for('save_track_note', track_slug=track_slug) }}">
+            <input type="hidden" name="day" value="{{ item.day }}" />
+            <textarea name="note" rows="3" placeholder="Write what you completed, doubts, or tomorrow's reminder">{{ item.note }}</textarea>
+            <button class="button button-secondary" type="submit">Save Note</button>
+          </form>
         </article>
       {% endfor %}
     </div>

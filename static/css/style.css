@@ -157,6 +157,11 @@ a {
   color: #fff;
 }
 
+.button-danger {
+  background: linear-gradient(135deg, #f45b7a, #c73d61);
+  color: #fff;
+}
+
 .button-secondary {
   background: rgba(18, 36, 66, 0.9);
   border: 1px solid var(--line);
@@ -527,6 +532,19 @@ a {
   flex-wrap: wrap;
 }
 
+.card-actions,
+.inline-actions,
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-actions {
+  margin-top: 16px;
+}
+
 .track-card-dsa {
   background: linear-gradient(145deg, rgba(18, 55, 98, 0.9), rgba(12, 28, 52, 0.96), rgba(17, 77, 128, 0.74));
 }
@@ -672,6 +690,23 @@ a {
   flex-wrap: wrap;
 }
 
+.day-note-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.day-note-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(13, 26, 48, 0.9);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
 .spotlight-copy h3 {
   margin: 0 0 10px;
   font-family: "Newsreader", serif;
@@ -804,6 +839,17 @@ a {
   overflow-x: auto;
 }
 
+.table-link,
+.table-button {
+  color: var(--accent-deep);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -847,6 +893,12 @@ th {
   .track-grid,
   .track-summary {
     grid-template-columns: 1fr;
+  }
+
+  .card-actions,
+  .inline-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
